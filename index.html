@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Auction dApp for Social Cause</title>
+
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+
+</head>
+<body> 
+    
+    <div class="container">
+        <h1 class = "container">Auction dApp</h1> <hr>
+                <img id="loader" src="loader.gif">
+        
+        <h2>Step 1: Registration</h2>
+                <br><br>
+
+                <button id="register" class = "buttn">Register</button>
+                <br><br>
+                <hr>
+
+        <h2>Step 2: Place the bid </h2>
+
+                <form>
+                    <label for="ItemId">Item ID</label>
+                    <input id="ItemId" type="text">
+
+                    <label for="tokens">No of Tokens</label>
+                    <input id="tokens" type="text">
+                    <button id="bid" class = "buttn">Submit Bid</button>
+                </form>
+        
+                <br><br><hr>
+
+        <h2>Step 3: Draw to reveal the winner</h2>
+                <button id="reveal" class = "btn btn-3">Reveal the winner</button>
+
+                        <p id = "winner1"></p>
+                        <p id = "winner2"></p>
+                        <p id = "winner3"></p>
+    </div>
+        
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"> var Web3 = require('web3');</script>
+
+    
+    <script>
+
+
+//Assigning msg.sender account 0 (Owner of smart contract account) to 'web3.eth.defaultAccount' 
+//---------------------------------------------------------------------------------------------
+window.addEventListener('load', async () => {
+    // Modern dapp browsers...
+    if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+            // Request account access if needed
+            await ethereum.enable();
+            // Acccounts now exposed
+            web3.eth.sendTransaction();
+            const web3 = window.web3;
+        
+        web3.eth.defaultAccount = web3.eth.getAccounts()
+           
+        } catch (error) {
+            // User denied account access...
+        }
+    }
+    // Legacy dapp browsers...
+    else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
+        // Acccounts always exposed
+        web3.eth.sendTransaction();
+    }
+    // Non-dapp browsers...
+    else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+    }
+        });
+
+        var AuctionContract = web3.eth.contract([
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_itemId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_count",
+				"type": "uint256"
+			}
+		],
+		"name": "bid",
+		"outputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "itemTokens",
+				"type": "uint256"
+			}
+		],
+		"name": "bidInfo",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "register",
+		"outputs": [],
+		"payable": true,
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "registerInfo",
+		"type": "event"
+	},
+	{
+		"constant": false,
+		"inputs": [],
+		"name": "revealWinners",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [],
+		"name": "winner",
+		"type": "event"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "beneficiary",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getWinners",
+		"outputs": [
+			{
+				"internalType": "address[3]",
+				"name": "",
+				"type": "address[3]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "items",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "itemId",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "winners",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]);
+
+        var Auction = AuctionContract.at('0xc111529a11cB9E50aa2C72b72E15652D5dCA40d0');
+        console.log(Auction);
+
+        var registerEvent = Auction.registerInfo();
+
+        registerEvent.watch (function(error, result){
+            if (result)
+                {
+                $("#loader").hide();
+                } else {
+                    $("#loader").hide();
+                    
+                }
+        });
+
+        var bidEvent = Auction.bidInfo();
+
+        bidEvent.watch (function(error, result){
+            if (result)
+                {
+                        $("#loader").hide();
+                } else {
+                    $("#loader").hide();
+                }
+        });
+
+        var winner = Auction.winner();
+
+       
+
+        winner.watch (function(error, result){
+            if (result)
+                {
+            
+                    $("#loader").hide();
+
+                    Auction.getWinners(function(error, result) {
+                        if(!error) {
+                            $("#winner1").html("Winner for Item-0:  " + result[0] );
+                             $("#winner2").html("Winner for Item-1:  " + result[1] );
+                             $("#winner3").html("Winner for Item-2:  " + result[2] );
+                        } else 
+                console.log(error);
+            });
+
+            } else {
+            $("#loader").hide();
+            
+            }
+        });
+
+
+
+        $("#register").click (function() {
+                 $("#loader").show(); 
+                    Auction.register((err, res) => {
+                        if (err){
+                         $("#loader").hide(); 
+                        }
+                });
+
+        });
+
+        $("#bid").click (function () {
+        $("#loader").show();
+                Auction.bid($("#ItemId").val(), $("#tokens").val(), (err, res) => {
+                    if(err){
+                        $("#loader").hide();
+                    }
+                });
+            });
+
+        $("#reveal").click (function () {
+             $("#loader").show();
+             Auction.revealWinners((err, res) => {
+        if(err){
+            $("#loader").hide();
+            }
+        });
+        });
+    </script>
+
+</body>
+</html>
